@@ -33,7 +33,16 @@ const BUILTIN_BRANDS = [
   { id: "none", name: "No Brand", color: "#374151", tagline: "", logo: "" },
 ];
 
-const PRODUCTS = ["PETROL", "DIESEL", "CNG", "XTRAPREMIUM", "SPEED", "POWER"];
+const PRODUCTS = [
+  "PETROL",
+  "DIESEL",
+  "CNG",
+  "XP95",
+  "XP100",
+  "XTRAPREMIUM",
+  "SPEED",
+  "POWER",
+];
 const VEHICLE_TYPES = ["CAR", "BIKE", "SCOOTER", "TRUCK", "AUTO", "BUS", "OTHER"];
 const PAY_MODES = ["CASH", "CARD", "UPI", "PAYTM", "FLEET CARD"];
 
@@ -49,7 +58,11 @@ const TEMPLATES = [
   { id: "t3", label: "Template 3 — Compact Slip" },
   { id: "t4", label: "Template 4 — Office GST Invoice" },
   { id: "t5", label: "Template 5 — BPCL Pump Slip (exact)" },
+  { id: "t6", label: "Template 6 — IndianOil Pump Slip (exact)" },
 ];
+
+/** Templates that print on a narrow thermal roll rather than A4. */
+const SLIP_TEMPLATES = ["t1", "t3", "t5", "t6"];
 
 const pad = (n, len = 2) => String(n).padStart(len, "0");
 
@@ -842,7 +855,7 @@ const TemplateFive = ({ d, brand }) => {
       {/* Boxed logo, exactly like the printed header */}
       {d.showLogo && (
         <div className="mb-2 flex justify-center">
-          <div className="flex flex-col items-center border-1 border-slate-900 px-3 py-1.5">
+          <div className="flex flex-col items-center border-2 border-slate-900 px-3 py-1.5">
             {brand.logo ? (
               <img
                 src={brand.logo}
@@ -868,12 +881,12 @@ const TemplateFive = ({ d, brand }) => {
       <div className="h-3" />
 
       <div className="pl-2">
-        <L k="Receipt No." v={d.receiptNo} />
+        <L k="Receipt No." v={` ${d.receiptNo}`} />
         <div className="whitespace-pre">FCC ID: {d.fccId}</div>
         <L k="FIP No." v={d.fipNo} />
         <L k="Nozzle No." v={d.nozzleNo} />
         <L k="Product" v={d.product} />
-        <L k="Density" v={`${d.density}Kg/Cu.mtr`} w={7} />
+        <L k="Density" v={`${d.density}Kg/Cu.mtr`} w={8} />
         <div className="whitespace-pre">Preset Type: {d.presetType}</div>
         <L k="Rate(Rs/L)" v={`  ${Number(d.rate || 0).toFixed(2)}`} w={11} />
         <L k="Volume(L)" v={pumpNum(d.volume)} w={11} />
@@ -908,11 +921,146 @@ const TemplateFive = ({ d, brand }) => {
   );
 };
 
+/* --- Template 6: IndianOil dispenser slip --------------------------- */
+
+/** IndianOil-style roundel: double ring with a dark band across the middle. */
+const IocEmblem = ({ size = 86 }) => (
+  <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
+    <circle cx="50" cy="50" r="47" fill="none" stroke="#1a1a1a" strokeWidth="4.5" />
+    <circle cx="50" cy="50" r="41" fill="none" stroke="#1a1a1a" strokeWidth="1.6" />
+    <rect x="6" y="39" width="88" height="21" fill="#1a1a1a" />
+    <text
+      x="50"
+      y="54.6"
+      textAnchor="middle"
+      fill="#ffffff"
+      style={{
+        fontSize: 15,
+        fontWeight: 700,
+        fontFamily:
+          '"Noto Sans Devanagari","Nirmala UI","Mangal","Kohinoor Devanagari",sans-serif',
+      }}
+    >
+      इंडियनऑयल
+    </text>
+  </svg>
+);
+
+const TemplateSix = ({ d, brand }) => {
+  /* Same fixed-width colon column the dispenser firmware prints. */
+  const L = ({ k, v, w = 12 }) => (
+    <div className="whitespace-pre">
+      {k.padEnd(w, " ")}: {v}
+    </div>
+  );
+
+  const ddmmyy = (() => {
+    const parts = String(d.date).split("-");
+    if (parts.length !== 3) return d.date;
+    return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`;
+  })();
+
+  /* The station block prints as separate lines; split on newline or comma. */
+  const addressLines = String(d.address || "")
+    .split(/\n|,/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return (
+    <div
+      className="mx-auto w-[300px] px-5 pb-8 pt-6 text-slate-900"
+      style={{
+        ...paperStyle(d.paper),
+        fontFamily: '"Courier New", Courier, monospace',
+        fontSize: 12.5,
+        lineHeight: 1.45,
+        letterSpacing: "0.02em",
+      }}
+    >
+      {/* Roundel + wordmark, no bounding box (unlike the BPCL slip) */}
+      {d.showLogo && (
+        <div className="mb-1 flex flex-col items-center">
+          {brand.logo ? (
+            <img
+              src={brand.logo}
+              alt={brand.name}
+              crossOrigin="anonymous"
+              style={{ width: 86, height: 86, objectFit: "contain" }}
+            />
+          ) : (
+            <IocEmblem size={86} />
+          )}
+          <div
+            className="mt-0.5 text-[21px] font-extrabold leading-none tracking-tight"
+            style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
+          >
+            {brand.id === "none" ? d.stationName : brand.name.replace(/\s+/g, "")}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-0.5 text-center text-[19px] font-bold tracking-wide">
+        {d.welcomeText}
+      </div>
+
+      {addressLines.map((line, i) => (
+        <div key={i} className="whitespace-pre uppercase">
+          {line}
+        </div>
+      ))}
+
+      <div className="whitespace-pre">Tel. No. : {d.phone}</div>
+      <div className="h-3" />
+
+      <div>
+        <L k="Receipt No." v={` ${d.receiptNo}`} />
+        <div className="whitespace-pre">FCC ID: {d.fccId}</div>
+        <L k="FIP No." v={d.fipNo} />
+        <L k="Nozzle No." v={d.nozzleNo} />
+        <L k="Product" v={d.product} />
+        <L k="Density" v={`${d.density}Kg/Cu.mtr`} w={8} />
+        <div className="whitespace-pre">Preset Type: {d.presetType}</div>
+        <L k="Rate(Rs/L)" v={`  ${Number(d.rate || 0).toFixed(2)}`} />
+        <L k="Volume(L)" v={pumpNum(d.volume)} />
+        <L k="Amount(Rs)" v={pumpNum(d.amount)} />
+        <div className="whitespace-pre">Atot: {d.atot}</div>
+        <div className="whitespace-pre">Vtot: {d.vtot}</div>
+      </div>
+
+      <div className="h-5" />
+
+      <div className="whitespace-pre">Vehicle No: {d.vehNo || "Not Entered"}</div>
+      <div className="whitespace-pre">Mobile No : {d.mobileNo || "Not Entered"}</div>
+
+      <div className="h-4" />
+
+      {/* IndianOil prints Date and Time on their own lines */}
+      <div className="whitespace-pre">Date : {ddmmyy}</div>
+      <div className="whitespace-pre">Time: {d.time}</div>
+
+      <div className="h-4" />
+
+      <div>
+        <L k="CST No" v={d.showTax ? d.cstNo : ""} />
+        <L k="LST No" v={d.showTax ? d.lstNo : ""} />
+        <L k="VAT No" v={d.showTax ? d.vatNo : ""} />
+        <div className="whitespace-pre">ATTENDANT ID : {d.attendantId || "Not Available"}</div>
+        <div className="whitespace-pre">FCC DATE : {d.fccDate || "Not Available"}</div>
+        <div className="whitespace-pre">FCC TIME : {d.fccTime || "Not Available"}</div>
+      </div>
+
+      <div className="h-4" />
+      <div className="whitespace-pre-wrap">{d.footer}</div>
+    </div>
+  );
+};
+
 const Receipt = ({ d, brand }) => {
   if (d.template === "t2") return <TemplateTwo d={d} brand={brand} />;
   if (d.template === "t3") return <TemplateThree d={d} brand={brand} />;
   if (d.template === "t4") return <TemplateFour d={d} brand={brand} />;
   if (d.template === "t5") return <TemplateFive d={d} brand={brand} />;
+  if (d.template === "t6") return <TemplateSix d={d} brand={brand} />;
   return <TemplateOne d={d} brand={brand} />;
 };
 
@@ -943,17 +1091,39 @@ function BrandAdmin({ brands, onSave, onClose, onSelect, flash }) {
     e.target.value = "";
   };
 
-  const commit = () => {
-    if (!draft.name.trim()) return flash("Brand name is required.");
+  /* A draft counts as pending whenever it differs from what's in the list. */
+  const isDirty = useMemo(() => {
+    if (!draft.name.trim() && !draft.logo) return false;
+    if (!editingId) return true;
+    const original = list.find((b) => b.id === editingId);
+    if (!original) return true;
+    return (
+      original.name !== draft.name ||
+      original.logo !== draft.logo ||
+      original.color !== draft.color ||
+      original.tagline !== draft.tagline
+    );
+  }, [draft, editingId, list]);
+
+  /** Folds the draft into a list and returns the result (pure, so saveAll
+   *  can use it immediately instead of waiting for a state flush). */
+  const foldDraft = (base) => {
+    if (!draft.name.trim()) return base;
     const id = editingId || draft.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 24);
     const entry = { ...draft, id, name: draft.name.trim() };
-    const next = editingId
-      ? list.map((b) => (b.id === editingId ? entry : b))
-      : [...list.filter((b) => b.id !== id), entry];
+    return base.some((b) => b.id === id)
+      ? base.map((b) => (b.id === id ? entry : b))
+      : [...base, entry];
+  };
+
+  const commit = () => {
+    if (!draft.name.trim()) return flash("Brand name is required.");
+    const next = foldDraft(list);
     setList(next);
+    onSave(next); // apply to the live preview straight away
     setDraft(emptyBrand());
     setEditingId(null);
-    flash(editingId ? "Brand updated." : "Brand added.");
+    flash(editingId ? "Brand updated — now click Save library." : "Brand added.");
   };
 
   const edit = (b) => {
@@ -962,21 +1132,32 @@ function BrandAdmin({ brands, onSave, onClose, onSelect, flash }) {
   };
 
   const remove = (id) => {
-    setList((p) => p.filter((b) => b.id !== id));
+    const next = list.filter((b) => b.id !== id);
+    setList(next);
+    onSave(next);
     if (editingId === id) {
       setDraft(emptyBrand());
       setEditingId(null);
     }
   };
 
+  /* Folds any uncommitted draft in first — the most common way to lose a
+     logo was uploading it and hitting Save without pressing Update. */
   const saveAll = () => {
-    onSave(list);
-    flash(storage.saveBrands(list) ? "Brand library saved." : "Saved for this session only.");
+    const next = foldDraft(list);
+    setList(next);
+    onSave(next);
+    flash(storage.saveBrands(next) ? "Brand library saved." : "Saved for this session only.");
+    setDraft(emptyBrand());
+    setEditingId(null);
     onClose();
   };
 
   const restore = () => {
     setList(BUILTIN_BRANDS);
+    onSave(BUILTIN_BRANDS);
+    setDraft(emptyBrand());
+    setEditingId(null);
     flash("Restored built-in brands.");
   };
 
@@ -1145,19 +1326,30 @@ function BrandAdmin({ brands, onSave, onClose, onSelect, flash }) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
-          >
-            Close
-          </button>
-          <button
-            onClick={saveAll}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-          >
-            Save library
-          </button>
+        <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-4">
+          <div className="min-w-0 text-xs">
+            {isDirty ? (
+              <span className="text-amber-700">
+                ⚠ “{draft.name || "Untitled"}” has unsaved edits — Save library will include them.
+              </span>
+            ) : (
+              <span className="text-slate-400">Logos are stored in this browser.</span>
+            )}
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <button
+              onClick={onClose}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+            >
+              Close
+            </button>
+            <button
+              onClick={saveAll}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            >
+              Save library
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1272,7 +1464,7 @@ export default function FuelBillGenerator() {
 
       /* Portrait A4, receipt centred with a margin. Long thermal slips get
          their own page size so they aren't shrunk to illegibility. */
-      const isSlip = d.template === "t1" || d.template === "t3" || d.template === "t5";
+      const isSlip = SLIP_TEMPLATES.includes(d.template);
       const pdf = new jsPDF({
         unit: "pt",
         format: isSlip ? [300, Math.max(420, (canvas.height / canvas.width) * 300 + 40)] : "a4",
@@ -1317,7 +1509,7 @@ export default function FuelBillGenerator() {
   }, [d.amount, d.gstRate, d.template]);
 
   const isOffice = d.template === "t4";
-  const isPumpSlip = d.template === "t5";
+  const isPumpSlip = d.template === "t5" || d.template === "t6";
 
   /* ---------------------------------------------------------------- */
 
@@ -1388,7 +1580,10 @@ export default function FuelBillGenerator() {
               <Text value={d.phone} onChange={set("phone")} />
             </Field>
             <div className="sm:col-span-2">
-              <Field label="Address">
+              <Field
+                label="Address"
+                hint="Pump slips print each comma-separated part on its own line"
+              >
                 <Text value={d.address} onChange={set("address")} />
               </Field>
             </div>
