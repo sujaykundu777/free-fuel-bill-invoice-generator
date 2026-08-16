@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* Print: show only the receipt preview */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #root .shadow-lg,
+  #root .shadow-lg * {
+    visibility: visible;
+  }
+  #root .shadow-lg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    box-shadow: none !important;
+  }
+}
