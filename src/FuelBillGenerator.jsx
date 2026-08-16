@@ -22,13 +22,23 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 const STORAGE_KEY = "fuel-bill-generator:last";
 const BRANDS_KEY = "fuel-bill-generator:brands";
 
+/** Shell pecten, inlined so Template 7 has a logo out of the box.
+ *  Replace it (or any brand's logo) from Admin · Logos. */
+const SHELL_LOGO = "data:image/png;base64,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";
+
 /** Built-in brands. `logo` may be a data URL or a remote image URL. */
 const BUILTIN_BRANDS = [
   { id: "iocl", name: "Indian Oil", color: "#e4610f", tagline: "Indian Oil Corporation Ltd.", logo: "" },
   { id: "hp", name: "HP Petrol Pump", color: "#e8112d", tagline: "Hindustan Petroleum Corp. Ltd.", logo: "" },
   { id: "bpcl", name: "Bharat Petroleum", color: "#f5a623", tagline: "Bharat Petroleum Corp. Ltd.", logo: "" },
   { id: "reliance", name: "Reliance Petroleum", color: "#0b6ab0", tagline: "Reliance Industries Ltd.", logo: "" },
-  { id: "shell", name: "Shell", color: "#fbce07", tagline: "Shell India Markets Pvt. Ltd.", logo: "" },
+  {
+    id: "shell",
+    name: "Shell",
+    color: "#DD1D21",
+    tagline: "Shell India Markets Pvt. Ltd.",
+    logo: SHELL_LOGO,
+  },
   { id: "nayara", name: "Nayara Energy", color: "#00a0af", tagline: "Nayara Energy Ltd.", logo: "" },
   { id: "none", name: "No Brand", color: "#374151", tagline: "", logo: "" },
 ];
@@ -59,10 +69,13 @@ const TEMPLATES = [
   { id: "t4", label: "Template 4 — Office GST Invoice" },
   { id: "t5", label: "Template 5 — BPCL Pump Slip (exact)" },
   { id: "t6", label: "Template 6 — IndianOil Pump Slip (exact)" },
+  { id: "t7", label: "Template 7 — Shell POS Receipt (combined)" },
 ];
 
 /** Templates that print on a narrow thermal roll rather than A4. */
-const SLIP_TEMPLATES = ["t1", "t3", "t5", "t6"];
+const SLIP_TEMPLATES = ["t1", "t3", "t5", "t6", "t7"];
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const pad = (n, len = 2) => String(n).padStart(len, "0");
 
@@ -185,6 +198,27 @@ const DEFAULTS = {
   fccDate: "",
   fccTime: "",
   welcomeText: "Welcomes You",
+
+  /* --- Shell POS receipt (Template 7) --- */
+  siteId: "12170818",
+  dealerName: "AVIGHNA ENTERPRISES",
+  fssai: "11222333000087",
+  posNo: "612 612",
+  seqNo: "2475",
+  pumpNo: "08",
+  grade: "V-PowerUNL",
+  duplicateReceipt: true,
+
+  showOffer: true,
+  offerText: "Get ₹10/- off on fueling petr",
+  offerAmount: "-10.00",
+
+  showLoyalty: true,
+  loyaltyProgram: "Shell Go+",
+  loyaltyId: "000000****4878",
+
+  shellFooter:
+    "Thank you for visiting Shell\nTell us about your visit at\nwww.shell.com/india/tellshell",
 };
 
 /* ------------------------------------------------------------------ */
@@ -268,6 +302,16 @@ const inputCls =
 
 const Text = ({ value, onChange, ...rest }) => (
   <input className={inputCls} value={value} onChange={(e) => onChange(e.target.value)} {...rest} />
+);
+
+const Area = ({ value, onChange, rows = 3, ...rest }) => (
+  <textarea
+    className={`${inputCls} resize-y font-mono text-xs`}
+    rows={rows}
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    {...rest}
+  />
 );
 
 const Select = ({ value, onChange, options }) => (
@@ -861,16 +905,16 @@ const TemplateFive = ({ d, brand }) => {
                 src={brand.logo}
                 alt={brand.name}
                 crossOrigin="anonymous"
-                style={{ width: 88, height: 88, objectFit: "contain" }}
+                style={{ width: 44, height: 44, objectFit: "contain" }}
               />
             ) : (
-              <PumpEmblem size={88} />
+              <PumpEmblem size={44} />
             )}
-            {/* <div className="mt-0.5 text-center text-[12px] font-bold leading-[1.05]">
+            <div className="mt-0.5 text-center text-[12px] font-bold leading-[1.05]">
               {(brand.id === "none" ? d.stationName : brand.name).split(" ").map((w, i) => (
                 <div key={i}>{w}</div>
               ))}
-            </div> */}
+            </div>
           </div>
         </div>
       )}
@@ -1055,12 +1099,175 @@ const TemplateSix = ({ d, brand }) => {
   );
 };
 
+/* --- Template 7: Shell POS receipt (both source layouts merged) -----
+ * No drawn logo here by design — upload the real Shell mark in
+ * Admin · Logos and it renders at the top. With no logo set, the receipt
+ * simply starts at the site header, which is how the plain roll prints.
+ */
+
+const TemplateSeven = ({ d, brand }) => {
+  const rule = (ch) => ch.repeat(38);
+
+  /* Right-aligned money column, the way a POS printer lays it out. */
+  const Money = ({ label, value, bold, indent }) => (
+    <div className={`flex justify-between gap-2 ${indent ? "pl-3" : ""}`}>
+      <span className={bold ? "font-bold" : ""}>{label}</span>
+      <span className={`whitespace-pre ${bold ? "font-bold" : ""}`}>{value}</span>
+    </div>
+  );
+
+  const volume = Number(d.volume) || 0;
+  const rate = Number(d.rate) || 0;
+  const gross = Number(d.amount) || 0;
+  const discount = d.showOffer ? Number(d.offerAmount) || 0 : 0;
+  const net = gross + discount;
+
+  const dmy = (() => {
+    const p = String(d.date).split("-");
+    return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : d.date;
+  })();
+  const dmySlash = dmy.replace(/-/g, "/");
+  const weekday = (() => {
+    const dt = new Date(d.date);
+    return isNaN(dt.getTime()) ? "" : WEEKDAYS[dt.getDay()];
+  })();
+
+  const addressLines = String(d.address || "")
+    .split(/\n|,/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return (
+    <div
+      className="mx-auto w-[320px] px-4 pb-7 pt-5 text-slate-900"
+      style={{
+        ...paperStyle(d.paper),
+        fontFamily: '"Courier New", Courier, monospace',
+        fontSize: 11.5,
+        lineHeight: 1.5,
+      }}
+    >
+      <div>
+        {/* Logo only appears once one is uploaded in Admin · Logos */}
+        {d.showLogo && brand.logo && (
+          <div className="mb-2 flex justify-center">
+            <img
+              src={brand.logo}
+              alt={brand.name}
+              crossOrigin="anonymous"
+              style={{ width: 72, height: 72, objectFit: "contain" }}
+            />
+          </div>
+        )}
+
+        {/* Site header */}
+        <div className="text-center">
+          <div>
+            {d.stationName} - Site ID: {d.siteId}
+          </div>
+          <div>{d.dealerName}</div>
+          {addressLines.map((l, i) => (
+            <div key={i}>{l}</div>
+          ))}
+          {d.showTax && <div>GSTIN: {d.gstin}</div>}
+          {d.fssai && <div>FSSAI: {d.fssai}</div>}
+        </div>
+
+        <div className="overflow-hidden whitespace-pre text-center">{rule("*")}</div>
+        {d.duplicateReceipt && (
+          <div className="text-center">** DUPLICATE RECEIPT **</div>
+        )}
+
+        <div className="flex justify-between gap-2">
+          <span>
+            {dmy} {d.time} POS:{d.posNo}
+          </span>
+          <span>#{d.receiptNo}</span>
+        </div>
+
+        <div className="my-1 overflow-hidden whitespace-pre">{rule("-")}</div>
+
+        {/* Dispenser block — from the forecourt printout */}
+        <Money label="Pump No:" value={d.pumpNo} />
+        <Money label="Grade:" value={d.grade} />
+        <Money label="Volume:" value={`${volume.toFixed(2)}L`} />
+        <Money label="Unit price(INR):" value={rate.toFixed(2)} />
+        <Money label="Amount(INR):" value={gross.toFixed(2)} bold />
+
+        <div className="my-1 overflow-hidden whitespace-pre">{rule("-")}</div>
+
+        {/* POS sale block — from the till receipt */}
+        <div>
+          {d.nozzleNo} - {d.grade}
+        </div>
+        <Money
+          label={`${volume.toFixed(2)}L x ${rate.toFixed(2)}Rs./L`}
+          value={`Rs. ${gross.toFixed(2)}`}
+          indent
+        />
+
+        {d.showOffer && (
+          <>
+            <div className="h-3" />
+            <Money label={d.offerText} value={`Rs. ${discount.toFixed(2)}`} />
+          </>
+        )}
+
+        <div className="h-3" />
+        <Money label="Sale Total" value={`Rs. ${net.toFixed(2)}`} />
+        <Money label={d.mode} value={`Rs. ${net.toFixed(2)}`} />
+
+        <div className="h-3" />
+        <Money label="TOTAL INVOICE" value={`Rs. ${net.toFixed(2)}`} bold />
+
+        {d.showLoyalty && (
+          <>
+            <div className="h-3" />
+            <div>{d.loyaltyProgram}</div>
+            <div>Customer ID: {d.loyaltyId}</div>
+            {d.showVehicle && d.vehNo && (
+              <div className="whitespace-pre">Vehicle No: {d.vehNo}</div>
+            )}
+            {d.showCustomer && d.customerName && (
+              <div className="whitespace-pre">Customer  : {d.customerName}</div>
+            )}
+            {d.mobileNo && <div className="whitespace-pre">Mobile No : {d.mobileNo}</div>}
+          </>
+        )}
+
+        <div className="h-3" />
+        <div className="flex justify-between gap-2">
+          <span>
+            {weekday} {dmySlash} {d.time}
+          </span>
+          <span>{d.seqNo}</span>
+        </div>
+
+        <div className="h-3" />
+        {d.duplicateReceipt && (
+          <div className="text-center">** DUPLICATE RECEIPT **</div>
+        )}
+        <div className="overflow-hidden whitespace-pre text-center">{rule("*")}</div>
+
+        <div className="text-center">
+          {String(d.shellFooter || "")
+            .split("\n")
+            .map((l, i) => (
+              <div key={i}>{l}</div>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Receipt = ({ d, brand }) => {
   if (d.template === "t2") return <TemplateTwo d={d} brand={brand} />;
   if (d.template === "t3") return <TemplateThree d={d} brand={brand} />;
   if (d.template === "t4") return <TemplateFour d={d} brand={brand} />;
   if (d.template === "t5") return <TemplateFive d={d} brand={brand} />;
   if (d.template === "t6") return <TemplateSix d={d} brand={brand} />;
+  if (d.template === "t7") return <TemplateSeven d={d} brand={brand} />;
   return <TemplateOne d={d} brand={brand} />;
 };
 
@@ -1375,10 +1582,18 @@ export default function FuelBillGenerator() {
     window.setTimeout(() => setToast(""), 2200);
   };
 
-  /* Restore a saved brand library on mount. */
+  /* Restore a saved brand library on mount, backfilling any built-in logo
+     that was added after the user last saved (e.g. the Shell pecten). */
   useEffect(() => {
     const saved = storage.loadBrands();
-    if (saved) setBrands(saved);
+    if (!saved) return;
+    setBrands(
+      saved.map((b) => {
+        if (b.logo) return b;
+        const builtin = BUILTIN_BRANDS.find((x) => x.id === b.id);
+        return builtin && builtin.logo ? { ...b, logo: builtin.logo } : b;
+      })
+    );
   }, []);
 
   const brand = useMemo(
@@ -1504,12 +1719,38 @@ export default function FuelBillGenerator() {
 
   const total = useMemo(() => {
     const base = parseFloat(d.amount) || 0;
-    const gst = d.template === "t4" ? base * ((parseFloat(d.gstRate) || 0) / 100) : 0;
-    return base + gst;
-  }, [d.amount, d.gstRate, d.template]);
+    if (d.template === "t4") return base + base * ((parseFloat(d.gstRate) || 0) / 100);
+    if (d.template === "t7" && d.showOffer) return base + (parseFloat(d.offerAmount) || 0);
+    return base;
+  }, [d.amount, d.gstRate, d.template, d.showOffer, d.offerAmount]);
 
   const isOffice = d.template === "t4";
   const isPumpSlip = d.template === "t5" || d.template === "t6";
+  const isShell = d.template === "t7";
+
+  /** Load the Shell sample so the template opens looking like the real thing. */
+  const applyShellPreset = () =>
+    setD((p) => ({
+      ...p,
+      template: "t7",
+      brand: "shell",
+      stationName: "Shell Bellandur",
+      dealerName: "AVIGHNA ENTERPRISES",
+      address: "No.80/2, Next to Hotel Citrus, ORR, Bellandur, Bangalore-560 037",
+      gstin: "29BRKPK5483R1ZK",
+      fssai: "11222333000087",
+      siteId: "12170818",
+      grade: "V-PowerUNL",
+      product: "XP95",
+      nozzleNo: "09",
+      pumpNo: "08",
+      rate: "137.98",
+      volume: "2.54",
+      amount: "350.00",
+      lockField: "amount",
+      mode: "UPI",
+      showTax: true,
+    }));
 
   /* ---------------------------------------------------------------- */
 
@@ -1733,6 +1974,125 @@ export default function FuelBillGenerator() {
             </Section>
           )}
 
+          {isShell && (
+            <Section title="Shell POS Receipt">
+              <div className="sm:col-span-2">
+                <button
+                  type="button"
+                  onClick={applyShellPreset}
+                  className="w-full rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800 transition hover:bg-amber-100"
+                >
+                  ⚡ Load Shell Bellandur sample data
+                </button>
+              </div>
+
+              <Field label="Site ID">
+                <Text value={d.siteId} onChange={set("siteId")} />
+              </Field>
+              <Field label="Dealer / Operator">
+                <Text value={d.dealerName} onChange={set("dealerName")} />
+              </Field>
+              <Field label="GSTIN">
+                <Text value={d.gstin} onChange={set("gstin")} />
+              </Field>
+              <Field label="FSSAI No.">
+                <Text value={d.fssai} onChange={set("fssai")} />
+              </Field>
+              <Field label="Pump No.">
+                <Text value={d.pumpNo} onChange={set("pumpNo")} />
+              </Field>
+              <Field label="Grade" hint="V-PowerUNL, V-ULP, V-Power Diesel…">
+                <Text value={d.grade} onChange={set("grade")} />
+              </Field>
+              <Field label="POS No.">
+                <Text value={d.posNo} onChange={set("posNo")} />
+              </Field>
+              <Field label="Receipt No." hint="Prints as #… on the POS line">
+                <Text value={d.receiptNo} onChange={set("receiptNo")} />
+              </Field>
+              <Field label="Sequence No." hint="Bottom-right of the receipt">
+                <Text value={d.seqNo} onChange={set("seqNo")} />
+              </Field>
+              <div className="flex items-end">
+                <Toggle
+                  checked={d.duplicateReceipt}
+                  onChange={set("duplicateReceipt")}
+                  label="DUPLICATE RECEIPT banner"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <Toggle checked={d.showOffer} onChange={set("showOffer")} label="Show offer line" />
+              </div>
+              {d.showOffer && (
+                <>
+                  <Field label="Offer Text">
+                    <Text value={d.offerText} onChange={set("offerText")} />
+                  </Field>
+                  <Field label="Offer Amount" hint="Negative discounts the total">
+                    <Text
+                      type="number"
+                      step="0.01"
+                      value={d.offerAmount}
+                      onChange={set("offerAmount")}
+                    />
+                  </Field>
+                </>
+              )}
+
+              <div className="sm:col-span-2">
+                <Toggle
+                  checked={d.showLoyalty}
+                  onChange={set("showLoyalty")}
+                  label="Show loyalty block"
+                />
+              </div>
+              {d.showLoyalty && (
+                <>
+                  <Field label="Loyalty Programme">
+                    <Text value={d.loyaltyProgram} onChange={set("loyaltyProgram")} />
+                  </Field>
+                  <Field label="Customer ID">
+                    <Text value={d.loyaltyId} onChange={set("loyaltyId")} />
+                  </Field>
+                  <Field label="Vehicle Number" hint="Prints under Customer ID">
+                    <Text value={d.vehNo} onChange={set("vehNo")} />
+                  </Field>
+                  <Field label="Customer Name" hint="Prints under Customer ID">
+                    <Text value={d.customerName} onChange={set("customerName")} />
+                  </Field>
+                  <Field label="Mobile Number" hint="Prints under Customer ID">
+                    <Text value={d.mobileNo} onChange={set("mobileNo")} />
+                  </Field>
+                  <div className="flex items-end gap-2">
+                    <Toggle
+                      checked={d.showVehicle}
+                      onChange={set("showVehicle")}
+                      label="Vehicle"
+                    />
+                    <Toggle
+                      checked={d.showCustomer}
+                      onChange={set("showCustomer")}
+                      label="Customer"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                The Shell pecten ships as the default logo. Swap it for your own in{" "}
+                <b className="text-slate-700">⚙ Admin · Logos</b> (edit the “Shell”
+                brand), or turn it off with the Show logo switch above.
+              </div>
+
+              <div className="sm:col-span-2">
+                <Field label="Footer Lines" hint="One line per row">
+                  <Area value={d.shellFooter} onChange={set("shellFooter")} rows={3} />
+                </Field>
+              </div>
+            </Section>
+          )}
+
           {isOffice && (
             <Section title="Office Invoice / Reimbursement">
               <Field label="Invoice No.">
@@ -1883,7 +2243,7 @@ export default function FuelBillGenerator() {
             </div>
 
             <p className="mt-3 text-center text-xs text-slate-400">
-              For personal record-keeping and reimbursement templates only.
+              For personal record-keeping and reimbursement templates only. Built by <a href="https://github.com/sujaykundu777" target="_blank" rel="noopener noreferrer" className="underline">xplor4r</a> 
             </p>
           </div>
         </div>
