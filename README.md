@@ -1,7 +1,13 @@
 # Fuel Bill Generator
 
-React + Tailwind fuel bill / petrol pump receipt generator with 5 templates,
+Fuel bill / petrol pump receipt generator
 live preview, PDF/PNG export, and an admin panel for pump logos.
+
+Templates currently :
+
+- Indian Oil
+- Bharat Petroleum
+- Shell
 
 ## Run it
 
