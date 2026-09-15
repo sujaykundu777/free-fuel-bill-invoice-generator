@@ -67,8 +67,8 @@ const TEMPLATES = [
   { id: "t2", label: "Template 2 — Modern Boxed" },
   { id: "t3", label: "Template 3 — Compact Slip" },
   { id: "t4", label: "Template 4 — Office GST Invoice" },
-  { id: "t5", label: "Template 5 — BPCL Pump Slip (exact)" },
-  { id: "t6", label: "Template 6 — IndianOil Pump Slip (exact)" },
+  { id: "t5", label: "Template 5 — Bharat Petroleum Pump Slip" },
+  { id: "t6", label: "Template 6 — IndianOil Pump Slip" },
   { id: "t7", label: "Template 7 — Shell POS Receipt (combined)" },
 ];
 
@@ -905,24 +905,28 @@ const TemplateFive = ({ d, brand }) => {
                 src={brand.logo}
                 alt={brand.name}
                 crossOrigin="anonymous"
-                style={{ width: 44, height: 44, objectFit: "contain" }}
+                style={{ width: 88, height: 88, objectFit: "contain" }}
               />
             ) : (
               <PumpEmblem size={44} />
             )}
-            <div className="mt-0.5 text-center text-[12px] font-bold leading-[1.05]">
+            {/* <div className="mt-0.5 text-center text-[12px] font-bold leading-[1.05]">
               {(brand.id === "none" ? d.stationName : brand.name).split(" ").map((w, i) => (
                 <div key={i}>{w}</div>
               ))}
-            </div>
+            </div> */}
           </div>
         </div>
       )}
 
       <div className="mb-1 text-center text-[19px] font-bold tracking-wide">{d.welcomeText}</div>
 
-      <div className="whitespace-pre">Tel. No.: {d.phone}</div>
-      <div className="h-3" />
+      <div className="text-[13px] font-bold tracking-wide">{d.stationName}</div>
+        {brand.tagline && <div className="text-[10px] opacity-70">{brand.tagline}</div>}
+      
+       <div className="mt-1 text-[10px] leading-tight opacity-80">{d.address}</div>
+       <div className="whitespace-pre">Tel. No.: {d.phone}</div>
+       <div className="h-3" />
 
       <div className="pl-2">
         <L k="Receipt No." v={` ${d.receiptNo}`} />
@@ -942,7 +946,11 @@ const TemplateFive = ({ d, brand }) => {
       <div className="h-5" />
 
       <div className="whitespace-pre">Vehicle No: {d.vehNo || "Not Entered"}</div>
+      <div className="whitespace-pre">Vehicle Type: {d.vehType || "Not Entered"}</div>
       <div className="whitespace-pre">Mobile No : {d.mobileNo || "Not Entered"}</div>
+      <div className="whitespace-pre">Customer Name : {d.customerName || "Not Entered"}</div>
+      <div className="whitespace-pre">Payment Mode : {d.mode || "Not Entered"}</div>
+      <div className="whitespace-pre font-bold">Amount : Rs.{d.amount || "Not Entered"}</div>
 
       <div className="h-4" />
 
@@ -1029,17 +1037,17 @@ const TemplateSix = ({ d, brand }) => {
               src={brand.logo}
               alt={brand.name}
               crossOrigin="anonymous"
-              style={{ width: 86, height: 86, objectFit: "contain" }}
+              style={{ width: 108, height: 108, objectFit: "contain" }}
             />
           ) : (
             <IocEmblem size={86} />
           )}
-          <div
+          {/* <div
             className="mt-0.5 text-[21px] font-extrabold leading-none tracking-tight"
             style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
           >
             {brand.id === "none" ? d.stationName : brand.name.replace(/\s+/g, "")}
-          </div>
+          </div> */}
         </div>
       )}
 
@@ -1047,6 +1055,7 @@ const TemplateSix = ({ d, brand }) => {
         {d.welcomeText}
       </div>
 
+      <div className="text-[13px] font-bold tracking-wide">{d.stationName}</div>
       {addressLines.map((line, i) => (
         <div key={i} className="whitespace-pre uppercase">
           {line}
@@ -1830,7 +1839,36 @@ export default function FuelBillGenerator() {
             </div>
           </Section>
 
-          <Section title="Transaction">
+          <Section title="Pump & Receipt Details">
+            <Field label="Receipt No.">
+              <Text value={d.receiptNo} onChange={set("receiptNo")} />
+            </Field>
+            <Field label="FCC ID">
+              <Text value={d.fccId} onChange={set("fccId")} />
+            </Field>
+            <Field label="FIP No.">
+              <Text value={d.fipNo} onChange={set("fipNo")} />
+            </Field>
+            <Field label="Nozzle No.">
+              <Text value={d.nozzleNo} onChange={set("nozzleNo")} />
+            </Field>
+            <Field label="Attendant ID">
+              <Text value={d.attendantId} onChange={set("attendantId")} />
+            </Field>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() =>
+                  setD((p) => ({ ...p, receiptNo: randomDigits(6), fccId: randomDigits(8) }))
+                }
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                ↻ Randomise IDs
+              </button>
+            </div>
+          </Section>
+
+                    <Section title="Transaction">
             <Field label="Product">
               <Select value={d.product} onChange={set("product")} options={PRODUCTS} />
             </Field>
@@ -1883,36 +1921,12 @@ export default function FuelBillGenerator() {
             </Field>
           </Section>
 
-          <Section title="Pump & Receipt Details">
-            <Field label="Receipt No.">
-              <Text value={d.receiptNo} onChange={set("receiptNo")} />
-            </Field>
-            <Field label="FCC ID">
-              <Text value={d.fccId} onChange={set("fccId")} />
-            </Field>
-            <Field label="FIP No.">
-              <Text value={d.fipNo} onChange={set("fipNo")} />
-            </Field>
-            <Field label="Nozzle No.">
-              <Text value={d.nozzleNo} onChange={set("nozzleNo")} />
-            </Field>
-            <Field label="Attendant ID">
-              <Text value={d.attendantId} onChange={set("attendantId")} />
-            </Field>
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={() =>
-                  setD((p) => ({ ...p, receiptNo: randomDigits(6), fccId: randomDigits(8) }))
-                }
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-              >
-                ↻ Randomise IDs
-              </button>
-            </div>
-          </Section>
 
           <Section title="Vehicle & Customer">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Toggle checked={d.showVehicle} onChange={set("showVehicle")} label="Show vehicle" />
+              <Toggle checked={d.showCustomer} onChange={set("showCustomer")} label="Show customer" />
+            </div>
             <Field label="Vehicle Type">
               <Select value={d.vehType} onChange={set("vehType")} options={VEHICLE_TYPES} />
             </Field>
@@ -1922,10 +1936,10 @@ export default function FuelBillGenerator() {
             <Field label="Customer Name">
               <Text value={d.customerName} onChange={set("customerName")} placeholder="Optional" />
             </Field>
-            <div className="grid gap-2">
-              <Toggle checked={d.showVehicle} onChange={set("showVehicle")} label="Show vehicle" />
-              <Toggle checked={d.showCustomer} onChange={set("showCustomer")} label="Show customer" />
-            </div>
+            <Field label="Mobile No." hint="Blank prints “Not Entered”">
+                <Text value={d.mobileNo} onChange={set("mobileNo")} />
+            </Field>
+            
           </Section>
 
           {isPumpSlip && (
@@ -1941,9 +1955,6 @@ export default function FuelBillGenerator() {
               </Field>
               <Field label="Vtot (volume totaliser)">
                 <Text value={d.vtot} onChange={set("vtot")} />
-              </Field>
-              <Field label="Mobile No." hint="Blank prints “Not Entered”">
-                <Text value={d.mobileNo} onChange={set("mobileNo")} />
               </Field>
               <Field label="Welcome Line">
                 <Text value={d.welcomeText} onChange={set("welcomeText")} />

@@ -78,3 +78,14 @@ export default function Page() {
 ```
 
 Only Tailwind core utility classes are used, so any Tailwind 3 or 4 setup works.
+
+
+### Roadmap
+
+- Integrate Hygraph
+- Logo/Brand Admin Save Functionality
+- Add Stations Save Functionality with map location and details
+- Ability to select saved stations
+- When selecting a template, auto select the station associated with it
+- Tooltip for information on each field eg. what is FCC ID
+- Fix Shell Template Fields Order 
